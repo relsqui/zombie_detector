@@ -48,7 +48,7 @@ tail -f .botfile | openssl s_client -connect irc.cat.pdx.edu:6697 | while true; 
         debug "starting setup"
         # set nick and get in channels
         raw "NICK $bot_nick"
-        raw "USER $bot_nick 0 $bot_nick :CAT IRC Checker"
+        raw "USER $bot_nick 0 $bot_nick :Zombie Detector"
         raw "JOIN $channels $chankey"
         # start the name loop
         $0 names_only &
