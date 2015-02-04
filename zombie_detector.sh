@@ -35,15 +35,13 @@ fi
 ## bot setup ##
 
 first_run=true
-quitting=false
 mkfifo .botfile
-touch .chanfile
-chmod 600 .botfile .chanfile
+chmod 600 .botfile
 
 
 ## main bot loop ##
 
-tail -f .botfile | openssl s_client -connect irc.cat.pdx.edu:6697 | while true; do
+tail -f .botfile | ncat --ssl irc.cat.pdx.edu 6697 | while true; do
     if $first_run; then
         debug "starting setup"
         # set nick and get in channels
@@ -66,18 +64,16 @@ tail -f .botfile | openssl s_client -connect irc.cat.pdx.edu:6697 | while true; 
     elif echo "$server_line" | grep -qi "^:relsqui!.*:$bot_nick: quit$"; then
         debug "told to quit; quitting"
         raw "QUIT :Leaving ..."
+        kill $loop_pid
         sleep 1
-        quitting=true
+        rm .botfile
+        debug "breaking ..."
+        break
     elif echo "$server_line" | grep -qi "^:[^ ]+ 353 $bot_nick"; then
         # this is a names reply, make a note of it
         channel="$(echo "$server_line" | sed "s/[^#]*\(\#[^ ]*\).*/\1/")"
         users="$(echo "$server_line" | sed "s/.[^:]*:\(.*\)/\1/")"
         #debug "$(date "+%F %T") $channel: $users"
         debug "$channel: $users"
-    elif $quitting; then
-        kill $loop_pid
-        rm .botfile .chanfile
-        debug "removed files"
-        exit
     fi
 done
